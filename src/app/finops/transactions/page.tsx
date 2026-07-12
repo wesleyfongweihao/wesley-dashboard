@@ -18,20 +18,13 @@ export default async function TransactionsPage() {
     );
   }
 
-  const total = (transactions ?? []).reduce((sum, t) => sum + t.amount, 0);
-
   return (
     <main className="min-h-dvh bg-muted/30 px-4 py-6">
       <div className="mx-auto w-full max-w-md space-y-4">
         <Link href="/finops" className="text-sm text-muted-foreground hover:underline">
           ← FinOps
         </Link>
-        <div>
-          <h1 className="text-xl font-bold">Transactions</h1>
-          <p className="text-sm text-muted-foreground">
-            Total spend: <span className="font-semibold text-foreground">${total.toFixed(2)}</span>
-          </p>
-        </div>
+        <h1 className="text-xl font-bold">Transactions</h1>
         <TransactionsList initialRows={transactions ?? []} />
       </div>
     </main>
