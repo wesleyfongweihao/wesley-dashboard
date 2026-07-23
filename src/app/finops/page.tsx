@@ -3,6 +3,8 @@ import { getWeekRange } from "@/lib/dates";
 import { FinOpsScreen } from "@/components/finops/finops-screen";
 import type { TransactionRow } from "@/components/transaction-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function FinOpsPage() {
   const { weekStart, weekEnding } = getWeekRange(new Date());
 
