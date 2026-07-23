@@ -1,5 +1,5 @@
 import type { TransactionRow } from "@/lib/finops-shared";
-import type { ModeKey } from "@/lib/mode-colors";
+import { MODE_ORDER, type ModeKey } from "@/lib/mode-colors";
 
 export type CategoryTotal = {
   mode: ModeKey;
@@ -34,6 +34,18 @@ export function getCategoryTotals(rows: TransactionRow[]): CategoryTotal[] {
     }
   }
   return [...map.values()];
+}
+
+/** Totals per mode (Flex/Fixed/Big Amount), in that fixed display order. */
+export function getModeTotals(
+  rows: { amount: number; mode: string }[]
+): { mode: ModeKey; amount: number }[] {
+  const totals = new Map<ModeKey, number>(MODE_ORDER.map((mode) => [mode, 0]));
+  for (const row of rows) {
+    const modeKey = toModeKey(row.mode);
+    totals.set(modeKey, (totals.get(modeKey) ?? 0) + row.amount);
+  }
+  return MODE_ORDER.map((mode) => ({ mode, amount: totals.get(mode) ?? 0 }));
 }
 
 /** Highest-spend category for a set of rows, with its share of the total. */

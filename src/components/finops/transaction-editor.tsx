@@ -307,7 +307,7 @@ export function TransactionEditor({
                 className="h-10 text-sm"
                 onClick={() => {
                   setMode(m);
-                  setCategory(null);
+                  setCategory(m === "Big Amount" ? "Others" : null);
                   setSubOption(null);
                 }}
               >
@@ -317,7 +317,16 @@ export function TransactionEditor({
           </div>
         </section>
 
-        {/* Category */}
+        {/* Category — auto-assigned for Big Amount, since there's only one option */}
+        {mode === "Big Amount" && (
+          <section className="space-y-1.5">
+            <p className="text-[11px] font-medium text-muted-foreground">Category</p>
+            <div className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+              Others (auto-assigned)
+            </div>
+          </section>
+        )}
+
         {categoryOptions && (
           <section className="space-y-1.5">
             <p className="text-[11px] font-medium text-muted-foreground">Category</p>

@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { MonieLogo } from "@/components/finops/logo";
 
-export function PageHeader({ title }: { title: string }) {
+export function PageHeader({
+  title,
+  backHref = "/finops",
+  showLogo = false,
+}: {
+  title: string;
+  backHref?: string;
+  showLogo?: boolean;
+}) {
   return (
     <div
       className="rounded-b-3xl px-4 pb-6 pt-6 text-white"
@@ -11,9 +20,14 @@ export function PageHeader({ title }: { title: string }) {
         background: "linear-gradient(165deg, #00A3DA 0%, #00B2E2 55%, #2AC4EC 100%)",
       }}
     >
+      {showLogo && (
+        <div className="flex justify-center pb-3">
+          <MonieLogo size={18} />
+        </div>
+      )}
       <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center">
         <Link
-          href="/finops"
+          href={backHref}
           aria-label="Back"
           className="flex size-9 items-center justify-center rounded-md hover:bg-white/10"
         >

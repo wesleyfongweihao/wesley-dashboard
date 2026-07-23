@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MonieLogo } from "@/components/finops/logo";
 
 export default function Home() {
   return (
@@ -10,7 +11,9 @@ export default function Home() {
         <Link href="/finops">
           <Card className="cursor-pointer transition-colors hover:bg-muted/50">
             <CardHeader>
-              <CardTitle>Money</CardTitle>
+              <CardTitle>
+                <MonieLogo />
+              </CardTitle>
               <CardDescription>Track your spending</CardDescription>
             </CardHeader>
           </Card>

@@ -10,6 +10,11 @@ export function parseDateString(s: string) {
   return new Date(year, month - 1, day);
 }
 
+export function addDays(dateStr: string, delta: number) {
+  const d = parseDateString(dateStr);
+  return toDateString(new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta));
+}
+
 /** Mon–Sun week; weekEnding is the Sunday on/after the anchor date. */
 export function getWeekRange(anchor: Date) {
   const dayOfWeek = anchor.getDay();
@@ -44,6 +49,58 @@ export function getMonthRange(anchor: Date) {
     monthStart: toDateString(monthStart),
     monthEnd: toDateString(monthEnd),
   };
+}
+
+/** "YYYY-MM" key for a given month, e.g. "2026-07". */
+export function toMonthKey(year: number, monthIndex: number) {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+export function currentMonthKey() {
+  const now = new Date();
+  return toMonthKey(now.getFullYear(), now.getMonth());
+}
+
+export function addMonthsToKey(monthKey: string, delta: number) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const shifted = new Date(year, month - 1 + delta, 1);
+  return toMonthKey(shifted.getFullYear(), shifted.getMonth());
+}
+
+/** First/last day of the calendar month identified by a "YYYY-MM" key. */
+export function getMonthRangeFromKey(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return getMonthRange(new Date(year, month - 1, 1));
+}
+
+/** "Jul 2026" for a "YYYY-MM" key. */
+export function formatMonthYear(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const d = new Date(year, month - 1, 1);
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+/** "Jul" for a "YYYY-MM" key. */
+export function formatMonthAbbr(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const d = new Date(year, month - 1, 1);
+  return d.toLocaleDateString("en-US", { month: "short" });
+}
+
+export function getYearRange(year: number) {
+  return { yearStart: `${year}-01-01`, yearEnd: `${year}-12-31` };
+}
+
+/** All Sundays (week_ending values) whose date falls within [start, end]. */
+export function getWeekEndingsInRange(start: string, end: string): string[] {
+  const endings: string[] = [];
+  let cursor = parseDateString(start);
+  const endDate = parseDateString(end);
+  while (cursor <= endDate) {
+    if (cursor.getDay() === 0) endings.push(toDateString(cursor));
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1);
+  }
+  return endings;
 }
 
 export function getWeekRangeLabel(weekEndingStr: string) {
