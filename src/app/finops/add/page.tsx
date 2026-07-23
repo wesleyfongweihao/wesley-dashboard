@@ -1,5 +1,5 @@
-import { TransactionForm } from "@/components/transaction-form";
+import { redirect } from "next/navigation";
 
 export default function AddTransactionPage() {
-  return <TransactionForm formMode="create" />;
+  redirect("/finops");
 }

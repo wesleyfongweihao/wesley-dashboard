@@ -1,36 +1,30 @@
-import Link from "next/link";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import { getWeekRange } from "@/lib/dates";
+import { FinOpsScreen } from "@/components/finops/finops-screen";
+import type { TransactionRow } from "@/components/transaction-form";
 
-export default function FinOpsHomePage() {
+export default async function FinOpsPage() {
+  const { weekStart, weekEnding } = getWeekRange(new Date());
+
+  const { data: transactions, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .gte("txn_date", weekStart)
+    .lte("txn_date", weekEnding)
+    .gte("amount", 0)
+    .order("txn_date", { ascending: false })
+    .order("created_at", { ascending: true })
+    .returns<TransactionRow[]>();
+
+  if (error) {
+    return (
+      <main className="min-h-dvh bg-muted/30 px-4 py-6">
+        <p className="text-destructive">Failed to load transactions: {error.message}</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-dvh bg-muted/30 px-4 py-6">
-      <div className="mx-auto w-full max-w-md space-y-4">
-        <div>
-          <Link href="/" className="text-sm text-muted-foreground hover:underline">
-            ← Home
-          </Link>
-          <h1 className="text-2xl font-bold">FinOps</h1>
-          <p className="text-sm text-muted-foreground">Finance Operations</p>
-        </div>
-
-        <Link href="/finops/add">
-          <Card className="cursor-pointer transition-colors hover:bg-muted/50">
-            <CardHeader>
-              <CardTitle>Add Transaction</CardTitle>
-              <CardDescription>Log a new expense</CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link href="/finops/transactions">
-          <Card className="cursor-pointer transition-colors hover:bg-muted/50">
-            <CardHeader>
-              <CardTitle>Transactions</CardTitle>
-              <CardDescription>View, edit, and delete entries</CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-      </div>
-    </main>
+    <FinOpsScreen initialWeekEnding={weekEnding} initialRows={transactions ?? []} />
   );
 }
