@@ -1,4 +1,4 @@
-import { LOCKED_FIXED_AMOUNTS } from "@/components/transaction-form";
+import { LOCKED_FIXED_AMOUNTS } from "@/lib/finops-shared";
 
 export type CategoryConfig =
   | { type: "flat" }
@@ -52,4 +52,15 @@ export function getCategoryConfig(category: string): CategoryConfig {
   const picker = PICKER_CONFIG[category];
   if (picker) return { type: "picker", ...picker };
   return { type: "flat" };
+}
+
+/** For edit-mode pre-fill: given a picker category and its saved
+ * description, figure out which sub-option it corresponds to (or "Others"
+ * if the description doesn't match a known option). */
+export function deriveSubOption(category: string, description: string): string | null {
+  const config = getCategoryConfig(category);
+  if (config.type !== "picker") return null;
+  return config.options.includes(description) && description !== "Others"
+    ? description
+    : "Others";
 }

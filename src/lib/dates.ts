@@ -36,6 +36,16 @@ export function addWeeks(weekEndingStr: string, delta: number) {
   return toDateString(shifted);
 }
 
+/** First/last day of the calendar month containing `anchor`. */
+export function getMonthRange(anchor: Date) {
+  const monthStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+  const monthEnd = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+  return {
+    monthStart: toDateString(monthStart),
+    monthEnd: toDateString(monthEnd),
+  };
+}
+
 export function getWeekRangeLabel(weekEndingStr: string) {
   const weekEnding = parseDateString(weekEndingStr);
   const weekStart = new Date(

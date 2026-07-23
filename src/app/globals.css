@@ -49,6 +49,7 @@
 }
 
 :root {
+  --font-sans: var(--font-dm-sans);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -115,6 +116,17 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Money module — SoFi-modelled theme, scoped so it doesn't touch pages
+   outside /finops (e.g. the Home page shares these same Card/Button
+   components and default tokens). */
+[data-theme="money"] {
+  --primary: #00a3da;
+  --primary-foreground: #ffffff;
+  --ring: #00a3da;
+  --border: #ececec;
+  --radius-xl: 1rem;
 }
 
 @layer base {

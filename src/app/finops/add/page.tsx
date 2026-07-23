@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { TransactionEditor } from "@/components/finops/transaction-editor";
 
 export default function AddTransactionPage() {
-  redirect("/finops");
+  return <TransactionEditor formMode="create" />;
 }

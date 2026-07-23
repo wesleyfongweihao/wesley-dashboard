@@ -10,8 +10,8 @@ export default function Home() {
         <Link href="/finops">
           <Card className="cursor-pointer transition-colors hover:bg-muted/50">
             <CardHeader>
-              <CardTitle>FinOps</CardTitle>
-              <CardDescription>Finance Operations</CardDescription>
+              <CardTitle>Money</CardTitle>
+              <CardDescription>Track your spending</CardDescription>
             </CardHeader>
           </Card>
         </Link>
