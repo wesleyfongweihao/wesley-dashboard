@@ -9,10 +9,8 @@ export const FLEX_CATEGORIES = [
   "Shop",
   "Transport",
   "Sport",
-  "Fruits",
   "Entertainment",
   "Events",
-  "Others",
 ] as const;
 
 export const FIXED_ITEMS = [

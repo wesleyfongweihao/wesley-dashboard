@@ -117,10 +117,13 @@ export function TransactionEditor({
     mode === "Flex" ? FLEX_CATEGORIES : mode === "Fixed" ? FIXED_ITEMS : null;
 
   const parsedAmount = parseFloat(amount);
+  const needsSubOption = category !== null && getCategoryConfig(category).type === "picker";
   const canSubmit =
     paymentMethod !== null &&
     mode !== null &&
     (mode === "Big Amount" || category !== null) &&
+    (!needsSubOption || subOption !== null) &&
+    description.trim().length > 0 &&
     !isNaN(parsedAmount) &&
     parsedAmount > 0 &&
     !submitting;
@@ -380,7 +383,7 @@ export function TransactionEditor({
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add a note (optional)"
+            placeholder="Add a note"
             className="h-10 text-sm"
           />
         </section>

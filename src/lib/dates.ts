@@ -61,6 +61,15 @@ export function currentMonthKey() {
   return toMonthKey(now.getFullYear(), now.getMonth());
 }
 
+/** The "current" month per the app's week_ending-month business rule —
+ * i.e. the month that today's in-progress week belongs to, which can run
+ * ahead of the plain calendar month near a month boundary (e.g. Jul 27
+ * whose week ends Aug 2 counts as August). */
+export function currentMonthKeyByWeekEnding() {
+  const { weekEnding } = getWeekRange(new Date());
+  return weekEnding.slice(0, 7);
+}
+
 export function addMonthsToKey(monthKey: string, delta: number) {
   const [year, month] = monthKey.split("-").map(Number);
   const shifted = new Date(year, month - 1 + delta, 1);

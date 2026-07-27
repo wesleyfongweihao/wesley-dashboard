@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import {
   addMonthsToKey,
-  currentMonthKey,
+  currentMonthKeyByWeekEnding,
   formatMonthYear,
   getMonthRangeFromKey,
   getYearRange,
@@ -19,8 +19,8 @@ export default async function DashboardPage({
   searchParams: Promise<{ month?: string; view?: string; year?: string }>;
 }) {
   const { month, view, year } = await searchParams;
-  const thisMonthKey = currentMonthKey();
-  const thisYear = new Date().getFullYear();
+  const thisMonthKey = currentMonthKeyByWeekEnding();
+  const thisYear = Number(thisMonthKey.slice(0, 4));
 
   if (view === "year") {
     const selectedYear = year && /^\d{4}$/.test(year) ? Number(year) : thisYear;

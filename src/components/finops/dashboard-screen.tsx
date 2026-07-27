@@ -20,6 +20,13 @@ const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HIGH_SPEND_MULTIPLIER = 1.5;
 const CORAL_BG = "#FAECE7";
 const CORAL_TEXT = "#993C1D";
+const GREEN_BG = "#E8F6EE";
+const GREEN_TEXT = "#0F6E56";
+const GRAY_BG = "#EFEFEF";
+const GRAY_TEXT = "#5B5B5B";
+/** A month is "high"/"low" once it's this many times above/below the mean;
+ * anything in between reads as "average". */
+const SPEND_BAND_MULTIPLIER = 1.15;
 
 type DashboardScreenProps =
   | {
@@ -301,6 +308,21 @@ function YearView({
   nextYearHref,
   monthTotals,
 }: Extract<DashboardScreenProps, { view: "year" }>) {
+  const tierByMonth = useMemo(() => {
+    const spendTotals = monthTotals.map((m) => m.total).filter((total) => total > 0);
+    const map = new Map<string, "high" | "average" | "low">();
+    if (spendTotals.length === 0) return map;
+    const mean = spendTotals.reduce((sum, v) => sum + v, 0) / spendTotals.length;
+    for (const m of monthTotals) {
+      if (m.total <= 0) continue;
+      if (m.total > mean * SPEND_BAND_MULTIPLIER) map.set(m.monthKey, "high");
+      else if (m.total < mean / SPEND_BAND_MULTIPLIER) map.set(m.monthKey, "low");
+      else map.set(m.monthKey, "average");
+    }
+    return map;
+  }, [monthTotals]);
+  const hasAnySpend = tierByMonth.size > 0;
+
   return (
     <>
       {/* Year navigation */}
@@ -330,41 +352,92 @@ function YearView({
 
       {/* Month grid */}
       <div className="grid grid-cols-3 gap-3">
-        {monthTotals.map((m) => (
-          <div key={m.monthKey} className="space-y-2 rounded-[12px] border border-border p-3">
-            <div className="flex items-center justify-between gap-1">
-              <p className="text-xs font-medium text-muted-foreground">
-                {formatMonthAbbr(m.monthKey)}
-              </p>
-              {m.weekCount === 5 && (
-                <span className="text-[9px] text-muted-foreground/70">5 wks</span>
+        {monthTotals.map((m) => {
+          const tier = tierByMonth.get(m.monthKey);
+          const cellStyle =
+            tier === "high"
+              ? { backgroundColor: CORAL_BG, borderColor: CORAL_TEXT }
+              : tier === "low"
+                ? { backgroundColor: GREEN_BG, borderColor: GREEN_TEXT }
+                : tier === "average"
+                  ? { backgroundColor: GRAY_BG, borderColor: GRAY_TEXT }
+                  : undefined;
+          const amountClass =
+            tier === "high"
+              ? "text-[#993C1D]"
+              : tier === "low"
+                ? "text-[#0F6E56]"
+                : tier === "average"
+                  ? "text-[#5B5B5B]"
+                  : undefined;
+
+          return (
+            <div
+              key={m.monthKey}
+              className="space-y-2 rounded-[12px] border p-3"
+              style={cellStyle}
+            >
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {formatMonthAbbr(m.monthKey)}
+                </p>
+                {m.weekCount === 5 && (
+                  <span className="text-[9px] text-muted-foreground/70">5 wks</span>
+                )}
+              </div>
+              {m.total > 0 ? (
+                <Amount value={m.total} size={16} className={amountClass} />
+              ) : (
+                <span className="text-sm text-muted-foreground/50">—</span>
               )}
+              <div className="space-y-1 pt-1">
+                {m.modeTotals.map((mt) => (
+                  <div
+                    key={mt.mode}
+                    className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground"
+                  >
+                    <span className="flex items-center gap-1">
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: getModeTone(mt.mode).fg }}
+                      />
+                      {mt.mode === "Big Amount" ? "Big" : mt.mode}
+                    </span>
+                    <Amount value={mt.amount} size={10} />
+                  </div>
+                ))}
+              </div>
             </div>
-            {m.total > 0 ? (
-              <Amount value={m.total} size={16} />
-            ) : (
-              <span className="text-sm text-muted-foreground/50">—</span>
-            )}
-            <div className="space-y-1 pt-1">
-              {m.modeTotals.map((mt) => (
-                <div
-                  key={mt.mode}
-                  className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground"
-                >
-                  <span className="flex items-center gap-1">
-                    <span
-                      className="size-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: getModeTone(mt.mode).fg }}
-                    />
-                    {mt.mode === "Big Amount" ? "Big" : mt.mode}
-                  </span>
-                  <Amount value={mt.amount} size={10} />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Legend */}
+      {hasAnySpend && (
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span
+              className="size-3 rounded-full"
+              style={{ backgroundColor: CORAL_BG, border: `1px solid ${CORAL_TEXT}` }}
+            />
+            High spend
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className="size-3 rounded-full"
+              style={{ backgroundColor: GRAY_BG, border: `1px solid ${GRAY_TEXT}` }}
+            />
+            Average
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className="size-3 rounded-full"
+              style={{ backgroundColor: GREEN_BG, border: `1px solid ${GREEN_TEXT}` }}
+            />
+            Low spend
+          </span>
+        </div>
+      )}
     </>
   );
 }

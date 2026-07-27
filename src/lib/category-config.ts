@@ -16,12 +16,21 @@ const PICKER_CONFIG: Record<string, { label: string; options: readonly string[] 
       "The Futurists",
       "YouTube",
       "Grab Unlimited",
-      "Others",
+      "Netflix",
     ],
   },
   Grocery: {
     label: "Item",
-    options: ["Farm Fresh", "Jobbie", "Greek Yogurt", "Granola", "Blueberry", "Almond", "Others"],
+    options: [
+      "Farm Fresh",
+      "Jobbie",
+      "Greek Yogurt",
+      "Granola",
+      "Blueberry",
+      "Almond",
+      "Kivi",
+      "Frozen Berries",
+    ],
   },
   Sport: {
     label: "Sport Type",
@@ -33,12 +42,11 @@ const PICKER_CONFIG: Record<string, { label: string; options: readonly string[] 
       "Pickle Ball",
       "Running",
       "Hike",
-      "Others",
     ],
   },
   Transport: {
     label: "Item",
-    options: ["Grab", "Indriver", "Maxim", "Taxi", "Bus", "Bolt", "Fuel Oil Car", "Others"],
+    options: ["Grab", "Indriver", "Maxim", "Taxi", "Bus", "Bolt", "Fuel Oil Car", "Car Park"],
   },
 };
 
