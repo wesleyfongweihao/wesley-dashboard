@@ -12,8 +12,7 @@ import { Amount } from "@/components/finops/amount";
 import { Sparkline } from "@/components/finops/sparkline";
 import { MonieLogo } from "@/components/finops/logo";
 import { TransactionRowCard } from "@/components/finops/transaction-row-card";
-
-const GRADIENT = "linear-gradient(165deg, #00A3DA 0%, #00B2E2 55%, #2AC4EC 100%)";
+import { HEADER_GRADIENT } from "@/components/finops/page-header";
 
 function useGreeting() {
   const [greeting, setGreeting] = useState<string | null>(null);
@@ -77,7 +76,7 @@ export function FinOpsScreen({
   return (
     <main className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="rounded-b-3xl px-4 pb-8 pt-6 text-white" style={{ background: GRADIENT }}>
+      <div className="rounded-b-3xl px-4 pb-8 pt-6 text-white" style={{ background: HEADER_GRADIENT }}>
         <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center">
           <button
             type="button"

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { MonieLogo } from "@/components/finops/logo";
 
+export const HEADER_GRADIENT = "linear-gradient(165deg, #00A3DA 0%, #00B2E2 55%, #2AC4EC 100%)";
+
 export function PageHeader({
   title,
   backHref = "/finops",
@@ -16,9 +18,7 @@ export function PageHeader({
   return (
     <div
       className="rounded-b-3xl px-4 pb-6 pt-6 text-white"
-      style={{
-        background: "linear-gradient(165deg, #00A3DA 0%, #00B2E2 55%, #2AC4EC 100%)",
-      }}
+      style={{ background: HEADER_GRADIENT }}
     >
       {showLogo && (
         <div className="flex justify-center pb-3">
