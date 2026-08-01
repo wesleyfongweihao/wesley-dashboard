@@ -56,11 +56,6 @@ export function toMonthKey(year: number, monthIndex: number) {
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
-export function currentMonthKey() {
-  const now = new Date();
-  return toMonthKey(now.getFullYear(), now.getMonth());
-}
-
 /** The "current" month per the app's week_ending-month business rule —
  * i.e. the month that today's in-progress week belongs to, which can run
  * ahead of the plain calendar month near a month boundary (e.g. Jul 27
