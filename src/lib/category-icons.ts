@@ -2,6 +2,7 @@ import {
   Apple,
   Banknote,
   Car,
+  ChefHat,
   Clapperboard,
   CreditCard,
   Dumbbell,
@@ -20,6 +21,7 @@ import {
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Food: Utensils,
+  "Meal Prep": ChefHat,
   Shop: ShoppingBag,
   Transport: Car,
   Sport: Dumbbell,

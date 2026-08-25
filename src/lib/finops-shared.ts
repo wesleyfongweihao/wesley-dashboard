@@ -6,6 +6,7 @@ export const MODES: Mode[] = ["Fixed", "Flex", "Big Amount"];
 
 export const FLEX_CATEGORIES = [
   "Food",
+  "Meal Prep",
   "Shop",
   "Transport",
   "Sport",

@@ -48,6 +48,14 @@ const PICKER_CONFIG: Record<string, { label: string; options: readonly string[] 
     label: "Item",
     options: ["Grab", "Indriver", "Maxim", "Taxi", "Bus", "Bolt", "Fuel Oil Car", "Car Park"],
   },
+  Shop: {
+    label: "Item",
+    options: ["Tissue", "Snack", "House Need"],
+  },
+  "Meal Prep": {
+    label: "Item",
+    options: ["Egg", "Vege", "Chicken", "Doufu"],
+  },
 };
 
 /** category -> behavior when tapped in the Add sheet's Category grid.
