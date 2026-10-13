@@ -19,43 +19,6 @@ const PICKER_CONFIG: Record<string, { label: string; options: readonly string[] 
       "Netflix",
     ],
   },
-  Grocery: {
-    label: "Item",
-    options: [
-      "Farm Fresh",
-      "Jobbie",
-      "Greek Yogurt",
-      "Granola",
-      "Blueberry",
-      "Almond",
-      "Kivi",
-      "Frozen Berries",
-    ],
-  },
-  Sport: {
-    label: "Sport Type",
-    options: [
-      "Badminton",
-      "Badminton Equipment",
-      "Golf",
-      "Gym",
-      "Pickle Ball",
-      "Running",
-      "Hike",
-    ],
-  },
-  Transport: {
-    label: "Item",
-    options: ["Grab", "Indriver", "Maxim", "Taxi", "Bus", "Bolt", "Fuel Oil Car", "Car Park"],
-  },
-  Shop: {
-    label: "Item",
-    options: ["Tissue", "Snack", "House Need"],
-  },
-  "Meal Prep": {
-    label: "Item",
-    options: ["Egg", "Vege", "Chicken", "Doufu"],
-  },
 };
 
 /** category -> behavior when tapped in the Add sheet's Category grid.

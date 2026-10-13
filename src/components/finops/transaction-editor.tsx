@@ -106,19 +106,23 @@ export function TransactionEditor({
     category: string;
   } | null>(null);
 
-  // Past descriptions used for the chosen category, offered as quick-pick
-  // suggestions (only for Entertainment for now).
-  const [pastDescriptions, setPastDescriptions] = useState<string[]>([]);
-  const suggestionsEnabled = mode === "Flex" && category === "Entertainment";
+  // Past descriptions used for the chosen Flex category, offered as
+  // quick-pick suggestions. Tagged with the category they were loaded for so
+  // a slow response never shows another category's list.
+  const [pastDescriptions, setPastDescriptions] = useState<{
+    category: string;
+    list: string[];
+  } | null>(null);
+  const suggestionCategory = mode === "Flex" ? category : null;
 
   useEffect(() => {
-    if (!suggestionsEnabled) return;
+    if (!suggestionCategory) return;
     let cancelled = false;
     supabase
       .from("transactions")
       .select("description")
       .eq("mode", "Flex")
-      .eq("category", "Entertainment")
+      .eq("category", suggestionCategory)
       .order("txn_date", { ascending: false })
       .limit(500)
       .returns<{ description: string }[]>()
@@ -130,16 +134,20 @@ export function TransactionEditor({
           const d = row.description.trim();
           if (d) counts.set(d, (counts.get(d) ?? 0) + 1);
         }
-        setPastDescriptions([...counts.entries()].sort((a, b) => b[1] - a[1]).map(([d]) => d));
+        setPastDescriptions({
+          category: suggestionCategory,
+          list: [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([d]) => d),
+        });
       });
     return () => {
       cancelled = true;
     };
-  }, [suggestionsEnabled]);
+  }, [suggestionCategory]);
 
   const typed = description.trim().toLowerCase();
-  const suggestions = suggestionsEnabled
-    ? pastDescriptions
+  const suggestions =
+    suggestionCategory && pastDescriptions?.category === suggestionCategory
+      ? pastDescriptions.list
         .filter((d) => d.toLowerCase() !== typed && d.toLowerCase().includes(typed))
         .slice(0, 8)
     : [];
