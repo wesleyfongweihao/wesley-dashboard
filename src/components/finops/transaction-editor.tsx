@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -105,6 +105,47 @@ export function TransactionEditor({
     amount: number;
     category: string;
   } | null>(null);
+
+  // Past descriptions used for the chosen category, offered as quick-pick
+  // suggestions (only for Entertainment for now).
+  const [pastDescriptions, setPastDescriptions] = useState<string[]>([]);
+  const suggestionsEnabled = mode === "Flex" && category === "Entertainment";
+
+  useEffect(() => {
+    if (!suggestionsEnabled) {
+      setPastDescriptions([]);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("transactions")
+      .select("description")
+      .eq("mode", "Flex")
+      .eq("category", "Entertainment")
+      .order("txn_date", { ascending: false })
+      .limit(500)
+      .returns<{ description: string }[]>()
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        // Most-used first, so the usual ones are at the top.
+        const counts = new Map<string, number>();
+        for (const row of data) {
+          const d = row.description.trim();
+          if (d) counts.set(d, (counts.get(d) ?? 0) + 1);
+        }
+        setPastDescriptions([...counts.entries()].sort((a, b) => b[1] - a[1]).map(([d]) => d));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [suggestionsEnabled]);
+
+  const typed = description.trim().toLowerCase();
+  const suggestions = suggestionsEnabled
+    ? pastDescriptions
+        .filter((d) => d.toLowerCase() !== typed && d.toLowerCase().includes(typed))
+        .slice(0, 8)
+    : [];
 
   const txnDate =
     dateChoice === "yesterday"
@@ -386,6 +427,21 @@ export function TransactionEditor({
             placeholder="Add a note"
             className="h-10 text-sm"
           />
+          {suggestions.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {suggestions.map((s) => (
+                <Button
+                  key={s}
+                  type="button"
+                  variant="outline"
+                  className="h-8 px-3 text-xs"
+                  onClick={() => setDescription(s)}
+                >
+                  {s}
+                </Button>
+              ))}
+            </div>
+          )}
         </section>
 
         {submitError && <p className="text-sm text-destructive">{submitError}</p>}
