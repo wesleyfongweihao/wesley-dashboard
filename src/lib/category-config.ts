@@ -6,19 +6,6 @@ export type CategoryConfig =
   | { type: "picker"; label: string; options: readonly string[] };
 
 const PICKER_CONFIG: Record<string, { label: string; options: readonly string[] }> = {
-  Subscription: {
-    label: "Subscription",
-    options: [
-      "The Edge News",
-      "Chat GPT",
-      "Claude",
-      "Habbit App",
-      "The Futurists",
-      "YouTube",
-      "Grab Unlimited",
-      "Netflix",
-    ],
-  },
 };
 
 /** category -> behavior when tapped in the Add sheet's Category grid.

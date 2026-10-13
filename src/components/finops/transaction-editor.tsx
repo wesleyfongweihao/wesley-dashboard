@@ -106,22 +106,27 @@ export function TransactionEditor({
     category: string;
   } | null>(null);
 
-  // Past descriptions used for the chosen Flex category, offered as
-  // quick-pick suggestions. Tagged with the category they were loaded for so
-  // a slow response never shows another category's list.
+  // Past descriptions used for the chosen mode + category, offered as
+  // quick-pick suggestions (every Flex category, Fixed > Subscription, and
+  // Big Amount). Tagged with the key they were loaded for so a slow response
+  // never shows another category's list.
   const [pastDescriptions, setPastDescriptions] = useState<{
-    category: string;
+    key: string;
     list: string[];
   } | null>(null);
-  const suggestionCategory = mode === "Flex" ? category : null;
+  const suggestionKey =
+    mode && category && (mode !== "Fixed" || category === "Subscription")
+      ? `${mode}|${category}`
+      : null;
 
   useEffect(() => {
-    if (!suggestionCategory) return;
+    if (!suggestionKey) return;
+    const [suggestionMode, suggestionCategory] = suggestionKey.split("|");
     let cancelled = false;
     supabase
       .from("transactions")
       .select("description")
-      .eq("mode", "Flex")
+      .eq("mode", suggestionMode)
       .eq("category", suggestionCategory)
       .order("txn_date", { ascending: false })
       .limit(500)
@@ -135,18 +140,18 @@ export function TransactionEditor({
           if (d) counts.set(d, (counts.get(d) ?? 0) + 1);
         }
         setPastDescriptions({
-          category: suggestionCategory,
+          key: suggestionKey,
           list: [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([d]) => d),
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [suggestionCategory]);
+  }, [suggestionKey]);
 
   const typed = description.trim().toLowerCase();
   const suggestions =
-    suggestionCategory && pastDescriptions?.category === suggestionCategory
+    suggestionKey && pastDescriptions?.key === suggestionKey
       ? pastDescriptions.list
         .filter((d) => d.toLowerCase() !== typed && d.toLowerCase().includes(typed))
         .slice(0, 8)
