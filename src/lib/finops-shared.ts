@@ -6,7 +6,7 @@ export const MODES: Mode[] = ["Fixed", "Flex", "Big Amount"];
 
 export const FLEX_CATEGORIES = [
   "Food",
-  "Meal Prep",
+  "Grocery",
   "Shop",
   "Transport",
   "Sport",
@@ -20,7 +20,6 @@ export const FIXED_ITEMS = [
   "Insurance",
   "Rental",
   "Hair",
-  "Grocery",
   "Subscription",
 ] as const;
 
