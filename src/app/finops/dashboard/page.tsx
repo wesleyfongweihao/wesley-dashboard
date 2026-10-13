@@ -26,13 +26,28 @@ export default async function DashboardPage({
     const selectedYear = year && /^\d{4}$/.test(year) ? Number(year) : thisYear;
     const { yearStart, yearEnd } = getYearRange(selectedYear);
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("amount, mode, week_ending")
-      .gte("week_ending", yearStart)
-      .lte("week_ending", yearEnd)
-      .gte("amount", 0)
-      .returns<{ amount: number; mode: string; week_ending: string }[]>();
+    // The database returns at most 1000 rows per request, so fetch in pages
+    // until everything for the year has been loaded.
+    const PAGE_SIZE = 1000;
+    const data: { amount: number; mode: string; week_ending: string }[] = [];
+    let error: { message: string } | null = null;
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data: page, error: pageError } = await supabase
+        .from("transactions")
+        .select("amount, mode, week_ending")
+        .gte("week_ending", yearStart)
+        .lte("week_ending", yearEnd)
+        .gte("amount", 0)
+        .order("id")
+        .range(from, from + PAGE_SIZE - 1)
+        .returns<{ amount: number; mode: string; week_ending: string }[]>();
+      if (pageError) {
+        error = pageError;
+        break;
+      }
+      data.push(...page);
+      if (page.length < PAGE_SIZE) break;
+    }
 
     if (error) {
       return (
