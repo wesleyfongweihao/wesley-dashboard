@@ -112,10 +112,7 @@ export function TransactionEditor({
   const suggestionsEnabled = mode === "Flex" && category === "Entertainment";
 
   useEffect(() => {
-    if (!suggestionsEnabled) {
-      setPastDescriptions([]);
-      return;
-    }
+    if (!suggestionsEnabled) return;
     let cancelled = false;
     supabase
       .from("transactions")
