@@ -40,5 +40,7 @@ export type TransactionRow = {
   category: string;
   description: string;
   amount: number;
+  // Older rows saved before the column existed have no quantity.
+  quantity: number | null;
   week_ending: string;
 };

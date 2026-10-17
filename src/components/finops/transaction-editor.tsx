@@ -60,6 +60,7 @@ function deriveInitialState(row: TransactionRow) {
     category: row.category,
     subOption: deriveSubOption(row.category, row.description),
     amount: String(row.amount),
+    quantity: row.quantity === null ? "" : String(row.quantity),
     description:
       getCategoryConfig(row.category).type === "picker"
         ? deriveSubOption(row.category, row.description) === "Others"
@@ -96,6 +97,7 @@ export function TransactionEditor({
   const [subOption, setSubOption] = useState<string | null>(initial?.subOption ?? null);
   const [amount, setAmount] = useState(initial?.amount ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [quantity, setQuantity] = useState(initial?.quantity ?? "");
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -168,6 +170,7 @@ export function TransactionEditor({
     mode === "Flex" ? FLEX_CATEGORIES : mode === "Fixed" ? FIXED_ITEMS : null;
 
   const parsedAmount = parseFloat(amount);
+  const parsedQuantity = Number(quantity);
   const needsSubOption = category !== null && getCategoryConfig(category).type === "picker";
   const canSubmit =
     paymentMethod !== null &&
@@ -177,6 +180,8 @@ export function TransactionEditor({
     description.trim().length > 0 &&
     !isNaN(parsedAmount) &&
     parsedAmount > 0 &&
+    Number.isInteger(parsedQuantity) &&
+    parsedQuantity > 0 &&
     !submitting;
 
   function handleCategorySelect(item: string) {
@@ -212,6 +217,7 @@ export function TransactionEditor({
       category: categoryToSave,
       description: description.trim(),
       amount: parsedAmount,
+      quantity: parsedQuantity,
     };
 
     if (isEdit && initialRow) {
@@ -244,6 +250,7 @@ export function TransactionEditor({
     }
 
     setAmount("");
+    setQuantity("");
     setCategory(null);
     setSubOption(null);
     setDescription("");
@@ -426,6 +433,21 @@ export function TransactionEditor({
               </section>
             );
           })()}
+
+        {/* Quantity */}
+        <section className="space-y-1.5">
+          <p className="text-[11px] font-medium text-muted-foreground">Quantity</p>
+          <Input
+            type="number"
+            inputMode="numeric"
+            step="1"
+            min="1"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            placeholder="How many?"
+            className="h-10 text-sm"
+          />
+        </section>
 
         {/* Description */}
         <section className="space-y-1.5">
