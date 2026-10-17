@@ -160,6 +160,7 @@ function MonthView({
     }
     return result;
   }, [calendarDays, filteredRows]);
+  const maxWeekTotal = Math.max(0, ...weeks.map((w) => w.total));
 
   const prevMonthTotal = useMemo(
     () =>
@@ -309,24 +310,6 @@ function MonthView({
               </div>
             );
           })}
-              <div
-                className={`col-span-7 mb-1.5 flex items-center justify-between rounded-[10px] px-3 py-2 ${
-                  week.hasToday ? "bg-primary/10" : "bg-muted/50"
-                }`}
-              >
-                <span className="text-xs font-medium text-muted-foreground">
-                  Week · {getWeekRangeLabel(week.weekEnding)}
-                </span>
-                {week.total > 0 ? (
-                  <Amount
-                    value={week.total}
-                    size={16}
-                    className={week.hasToday ? "text-primary" : "text-foreground"}
-                  />
-                ) : (
-                  <span className="text-sm text-muted-foreground/50">—</span>
-                )}
-              </div>
             </Fragment>
           ))}
         </div>
@@ -346,6 +329,51 @@ function MonthView({
           </span>
         </div>
       </div>
+
+      {/* Weekly totals — bar length is relative to the biggest week */}
+      <section className="space-y-3">
+        <p className="text-sm font-medium text-muted-foreground">By week</p>
+        <div className="space-y-3">
+          {weeks.map((week, i) => {
+            const barPercent = maxWeekTotal > 0 ? (week.total / maxWeekTotal) * 100 : 0;
+            return (
+              <div key={week.weekEnding} className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="flex items-baseline gap-2">
+                    <span
+                      className={`text-sm font-medium ${
+                        week.hasToday ? "text-primary" : "text-foreground"
+                      }`}
+                    >
+                      Week {i + 1}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {getWeekRangeLabel(week.weekEnding)}
+                    </span>
+                  </span>
+                  {week.total > 0 ? (
+                    <Amount
+                      value={week.total}
+                      size={17}
+                      className={week.hasToday ? "text-primary" : "text-foreground"}
+                    />
+                  ) : (
+                    <span className="text-sm text-muted-foreground/50">—</span>
+                  )}
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted/60">
+                  <div
+                    className={`h-full rounded-full ${
+                      week.hasToday ? "bg-primary" : "bg-primary/35"
+                    }`}
+                    style={{ width: `${barPercent}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <SpendDonut rows={filteredRows} filter={modeFilter} />
     </>
