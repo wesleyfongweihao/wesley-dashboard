@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/finops/page-header";
 import { Amount } from "@/components/finops/amount";
+import { SpendDonut } from "@/components/finops/spend-donut";
 import { formatMonthAbbr } from "@/lib/dates";
 import { getModeTone } from "@/lib/mode-colors";
 import type { TransactionRow } from "@/lib/finops-shared";
@@ -339,6 +340,8 @@ function MonthView({
           </span>
         </div>
       </div>
+
+      <SpendDonut rows={filteredRows} filter={modeFilter} />
     </>
   );
 }
