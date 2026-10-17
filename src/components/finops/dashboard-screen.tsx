@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/finops/page-header";
 import { Amount } from "@/components/finops/amount";
 import { SpendDonut } from "@/components/finops/spend-donut";
-import { formatMonthAbbr } from "@/lib/dates";
+import { formatMonthAbbr, getWeekRangeLabel } from "@/lib/dates";
 import { getModeTone } from "@/lib/mode-colors";
 import type { TransactionRow } from "@/lib/finops-shared";
 import {
@@ -247,14 +247,13 @@ function MonthView({
 
       {/* Calendar grid */}
       <div>
-        <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_3.5rem] gap-1 text-center text-[11px] tracking-wide text-muted-foreground">
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px] tracking-wide text-muted-foreground">
           {WEEKDAY_LABELS.map((label) => (
             <div key={label}>{label}</div>
           ))}
-          <div>Week</div>
         </div>
 
-        <div className="mt-1 grid grid-cols-[repeat(7,minmax(0,1fr))_3.5rem] gap-1">
+        <div className="mt-1 grid grid-cols-7 gap-1">
           {weeks.map((week) => (
             <Fragment key={week.weekEnding}>
           {week.days.map((day) => {
@@ -310,15 +309,22 @@ function MonthView({
               </div>
             );
           })}
-              <div className="flex items-center justify-center rounded-[10px] bg-muted/40 text-center">
+              <div
+                className={`col-span-7 mb-1.5 flex items-center justify-between rounded-[10px] px-3 py-2 ${
+                  week.hasToday ? "bg-primary/10" : "bg-muted/50"
+                }`}
+              >
+                <span className="text-xs font-medium text-muted-foreground">
+                  Week · {getWeekRangeLabel(week.weekEnding)}
+                </span>
                 {week.total > 0 ? (
                   <Amount
                     value={week.total}
-                    size={10}
-                    className={`font-medium ${week.hasToday ? "text-primary" : "text-foreground"}`}
+                    size={16}
+                    className={week.hasToday ? "text-primary" : "text-foreground"}
                   />
                 ) : (
-                  <span className="text-[10px] text-muted-foreground/50">—</span>
+                  <span className="text-sm text-muted-foreground/50">—</span>
                 )}
               </div>
             </Fragment>
