@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/finops/page-header";
@@ -135,6 +135,31 @@ function MonthView({
     [filteredRows]
   );
 
+  // Calendar days split into Mon–Sun weeks, each with its week_ending (the
+  // Sunday) and that week's total for the selected mode filter.
+  const weeks = useMemo(() => {
+    const totalByWeekEnding = new Map<string, number>();
+    for (const row of filteredRows) {
+      totalByWeekEnding.set(
+        row.week_ending,
+        (totalByWeekEnding.get(row.week_ending) ?? 0) + row.amount
+      );
+    }
+    const result: { weekEnding: string; days: CalendarDay[]; total: number; hasToday: boolean }[] =
+      [];
+    for (let i = 0; i < calendarDays.length; i += 7) {
+      const days = calendarDays.slice(i, i + 7);
+      const weekEnding = days[days.length - 1].date;
+      result.push({
+        weekEnding,
+        days,
+        total: totalByWeekEnding.get(weekEnding) ?? 0,
+        hasToday: days.some((d) => d.isToday),
+      });
+    }
+    return result;
+  }, [calendarDays, filteredRows]);
+
   const prevMonthTotal = useMemo(
     () =>
       prevMonthRows
@@ -221,14 +246,17 @@ function MonthView({
 
       {/* Calendar grid */}
       <div>
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] tracking-wide text-muted-foreground">
+        <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_3.5rem] gap-1 text-center text-[11px] tracking-wide text-muted-foreground">
           {WEEKDAY_LABELS.map((label) => (
             <div key={label}>{label}</div>
           ))}
+          <div>Week</div>
         </div>
 
-        <div className="mt-1 grid grid-cols-7 gap-1">
-          {calendarDays.map((day) => {
+        <div className="mt-1 grid grid-cols-[repeat(7,minmax(0,1fr))_3.5rem] gap-1">
+          {weeks.map((week) => (
+            <Fragment key={week.weekEnding}>
+          {week.days.map((day) => {
             const total = dailyTotals.get(day.date) ?? 0;
             const hasTxn = !day.isFuture && total > 0;
             const highSpend = hasTxn && highSpendThreshold !== null && total > highSpendThreshold;
@@ -281,6 +309,19 @@ function MonthView({
               </div>
             );
           })}
+              <div className="flex items-center justify-center rounded-[10px] bg-muted/40 text-center">
+                {week.total > 0 ? (
+                  <Amount
+                    value={week.total}
+                    size={10}
+                    className={`font-medium ${week.hasToday ? "text-primary" : "text-foreground"}`}
+                  />
+                ) : (
+                  <span className="text-[10px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+            </Fragment>
+          ))}
         </div>
 
         {/* Legend */}
