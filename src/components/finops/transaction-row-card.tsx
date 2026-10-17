@@ -18,8 +18,8 @@ export function TransactionRowCard({ rows }: { rows: TransactionRow[] }) {
           const tone = getModeTone(row.mode);
           const subtext = [
             formatPaymentMethodShort(row.payment_method),
-            row.quantity === null ? "" : `×${row.quantity}`,
             row.description.trim() ? formatFirstCap(row.description.trim()) : "",
+            row.quantity === null ? "" : String(row.quantity),
           ]
             .filter(Boolean)
             .join(" · ");
