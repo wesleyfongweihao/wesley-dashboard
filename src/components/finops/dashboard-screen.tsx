@@ -162,6 +162,18 @@ function MonthView({
   }, [calendarDays, filteredRows]);
   const maxWeekTotal = Math.max(0, ...weeks.map((w) => w.total));
 
+  // Tapping a week narrows "Where it went" to that week; tapping it again
+  // (or changing month) goes back to the whole month.
+  const [selectedWeekEnding, setSelectedWeekEnding] = useState<string | null>(null);
+  const selectedWeekIndex = weeks.findIndex((w) => w.weekEnding === selectedWeekEnding);
+  const donutRows = useMemo(
+    () =>
+      selectedWeekIndex === -1
+        ? filteredRows
+        : filteredRows.filter((r) => r.week_ending === selectedWeekEnding),
+    [filteredRows, selectedWeekEnding, selectedWeekIndex]
+  );
+
   const prevMonthTotal = useMemo(
     () =>
       prevMonthRows
@@ -332,12 +344,24 @@ function MonthView({
 
       {/* Weekly totals — bar length is relative to the biggest week */}
       <section className="space-y-3">
-        <p className="text-sm font-medium text-muted-foreground">By week</p>
-        <div className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm font-medium text-muted-foreground">By week</p>
+          <p className="text-xs text-muted-foreground/70">Tap a week to see where it went</p>
+        </div>
+        <div className="space-y-1">
           {weeks.map((week, i) => {
             const barPercent = maxWeekTotal > 0 ? (week.total / maxWeekTotal) * 100 : 0;
+            const selected = i === selectedWeekIndex;
             return (
-              <div key={week.weekEnding} className="space-y-1.5">
+              <button
+                type="button"
+                key={week.weekEnding}
+                aria-pressed={selected}
+                onClick={() => setSelectedWeekEnding(selected ? null : week.weekEnding)}
+                className={`block w-full space-y-1.5 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                  selected ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted/50"
+                }`}
+              >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="flex items-baseline gap-2">
                     <span
@@ -369,13 +393,17 @@ function MonthView({
                     style={{ width: `${barPercent}%` }}
                   />
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </section>
 
-      <SpendDonut rows={filteredRows} filter={modeFilter} />
+      <SpendDonut
+        rows={donutRows}
+        filter={modeFilter}
+        title={selectedWeekIndex === -1 ? "Where it went · Whole month" : `Where it went · Week ${selectedWeekIndex + 1}`}
+      />
     </>
   );
 }

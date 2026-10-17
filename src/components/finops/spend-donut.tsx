@@ -47,9 +47,24 @@ function withRest(groups: Group[]): Slice[] {
 /** Donut of where the spend went. "All" splits by mode; a single mode splits
  * by category (Big Amount rows are all "Others", so those split by
  * description instead). Rows are expected to be already filtered. */
-export function SpendDonut({ rows, filter }: { rows: TransactionRow[]; filter: ModeFilter }) {
+export function SpendDonut({
+  rows,
+  filter,
+  title,
+}: {
+  rows: TransactionRow[];
+  filter: ModeFilter;
+  title: string;
+}) {
   const total = rows.reduce((sum, r) => sum + r.amount, 0);
-  if (total <= 0) return null;
+  if (total <= 0) {
+    return (
+      <section className="space-y-2">
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground">No spending to show.</p>
+      </section>
+    );
+  }
 
   const splitByMode = filter === "All";
   const splitByDescription = filter === "Big";
@@ -88,7 +103,7 @@ export function SpendDonut({ rows, filter }: { rows: TransactionRow[]; filter: M
 
   return (
     <section className="space-y-4">
-      <p className="text-sm font-medium text-muted-foreground">Where it went</p>
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
 
       <div className="relative mx-auto size-44">
         <svg viewBox="0 0 100 100" className="size-full -rotate-90">
