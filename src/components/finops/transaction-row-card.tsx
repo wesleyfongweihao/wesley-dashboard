@@ -16,11 +16,13 @@ export function TransactionRowCard({ rows }: { rows: TransactionRow[] }) {
         {rows.map((row) => {
           const Icon = getCategoryIcon(row.category);
           const tone = getModeTone(row.mode);
-          const subtext = row.description.trim()
-            ? `${formatPaymentMethodShort(row.payment_method)} · ${formatFirstCap(
-                row.description.trim()
-              )}`
-            : formatPaymentMethodShort(row.payment_method);
+          const subtext = [
+            formatPaymentMethodShort(row.payment_method),
+            row.quantity === null ? "" : `×${row.quantity}`,
+            row.description.trim() ? formatFirstCap(row.description.trim()) : "",
+          ]
+            .filter(Boolean)
+            .join(" · ");
           return (
             <Link
               key={row.id}
