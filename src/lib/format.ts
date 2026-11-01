@@ -28,6 +28,12 @@ export function formatWeekEndingShort(dateStr: string): string {
   return `WE ${d.getDate()} ${MONTH_ABBR[d.getMonth()]}`;
 }
 
+/** e.g. "1 Nov" — compact date label for chart axes. */
+export function formatDateShort(dateStr: string): string {
+  const d = parseDateString(dateStr);
+  return `${d.getDate()} ${MONTH_ABBR[d.getMonth()]}`;
+}
+
 export function formatModeShort(mode: string): string {
   return mode === "Big Amount" ? "Big" : mode;
 }

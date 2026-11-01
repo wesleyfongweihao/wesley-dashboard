@@ -86,27 +86,87 @@ function Legend({ segments }: { segments: Segment[] }) {
   );
 }
 
+type TrendWeek = { label: string; amount: number };
+
+/** A column per week against the budget threshold (dashed line) — lets
+ * Wesley see whether he's missing budget occasionally or most weeks. */
+function TrendChart({
+  weeks,
+  budget,
+  accentColor,
+}: {
+  weeks: TrendWeek[];
+  budget: number;
+  accentColor: string;
+}) {
+  const chartHeight = 72;
+  const maxValue = Math.max(budget, ...weeks.map((w) => w.amount), 1) * 1.15;
+  const thresholdFromTop = chartHeight - (budget / maxValue) * chartHeight;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs text-muted-foreground">
+        Last {weeks.length} weeks · dashed line is{" "}
+        <Amount value={budget} size={11} className="text-muted-foreground" />
+      </p>
+      <div className="relative" style={{ height: chartHeight }}>
+        <div
+          className="absolute inset-x-0 border-t border-dashed border-muted-foreground/40"
+          style={{ top: thresholdFromTop }}
+        />
+        <div className="flex h-full items-end justify-between gap-1.5">
+          {weeks.map((w, i) => {
+            const barHeight = w.amount > 0 ? Math.max((w.amount / maxValue) * chartHeight, 4) : 0;
+            const over = w.amount > budget;
+            return (
+              <div key={i} className="flex-1">
+                <div
+                  className="mx-auto w-full max-w-6 rounded-t-[4px]"
+                  style={{
+                    height: barHeight,
+                    backgroundColor: w.amount > 0 ? (over ? "#F59E0B" : accentColor) : "transparent",
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="flex justify-between gap-1.5 text-center text-[10px] text-muted-foreground">
+        {weeks.map((w, i) => (
+          <span key={i} className="flex-1 truncate">
+            {w.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** A weekly/monthly budget summary: a progress ring against the budget, the
- * amount spent and how far over/under budget it is, then a breakdown bar
- * (by category for Pocket, by week for Grocery) with a legend. Pass
- * `remainderLabel` to append an extra "unspent" segment to the bar (used by
- * the Grocery card, which tracks against its budget rather than itself). */
+ * amount spent and how far over/under budget it is, then either a breakdown
+ * bar with a legend (pass `segments`, by week for Grocery — `remainderLabel`
+ * appends an extra "unspent" segment since Grocery tracks against its
+ * budget rather than itself) or a per-week trend chart against the budget
+ * threshold (pass `trend`, used by Pocket). */
 export function BudgetCard({
   title,
   budget,
   spent,
   accentColor,
   trackColor,
-  segments,
+  segments = [],
   remainderLabel,
+  trend,
 }: {
   title: string;
   budget: number;
   spent: number;
   accentColor: string;
   trackColor: string;
-  segments: Segment[];
+  segments?: Segment[];
   remainderLabel?: string;
+  trend?: TrendWeek[];
 }) {
   const percent = budget > 0 ? (spent / budget) * 100 : 0;
   const isOver = spent > budget;
@@ -144,6 +204,10 @@ export function BudgetCard({
             <MiniBar segments={barSegments} />
             <Legend segments={barSegments} />
           </div>
+        )}
+
+        {trend && trend.length > 0 && (
+          <TrendChart weeks={trend} budget={budget} accentColor={accentColor} />
         )}
       </CardContent>
     </Card>

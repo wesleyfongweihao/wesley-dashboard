@@ -3,15 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { formatShortDay, formatWeekEndingShort } from "@/lib/format";
+import { formatDateShort, formatShortDay, formatWeekEndingShort } from "@/lib/format";
 import { getModeTone } from "@/lib/mode-colors";
 import { getTopCategory, groupByDay } from "@/lib/finops-aggregate";
 import {
   GROCERY_WEEK_COLORS,
   MONTHLY_GROCERY_BUDGET,
-  POCKET_CATEGORY_COLORS,
   WEEKLY_POCKET_BUDGET,
-  getPocketBreakdown,
+  getPocketSpent,
   getWeeklyTotals,
 } from "@/lib/finops-budget";
 import type { TransactionRow } from "@/lib/finops-shared";
@@ -37,12 +36,16 @@ export function FinOpsScreen({
   groceryMonthRows,
   groceryMonthLabel,
   fourWeekTotals,
+  pocketWeekEndings,
+  pocketWeeklyTotals,
   recentRows,
 }: {
   weekRows: TransactionRow[];
   groceryMonthRows: { amount: number; week_ending: string }[];
   groceryMonthLabel: string;
   fourWeekTotals: number[];
+  pocketWeekEndings: string[];
+  pocketWeeklyTotals: number[];
   recentRows: TransactionRow[];
 }) {
   const greeting = useGreeting();
@@ -51,16 +54,10 @@ export function FinOpsScreen({
   const listDayGroups = useMemo(() => groupByDay(recentRows), [recentRows]);
   const topCategory = useMemo(() => getTopCategory(weekRows), [weekRows]);
 
-  const pocketBreakdown = useMemo(() => getPocketBreakdown(weekRows), [weekRows]);
-  const pocketSpent = useMemo(
-    () => pocketBreakdown.reduce((sum, c) => sum + c.amount, 0),
-    [pocketBreakdown]
-  );
-  const pocketSegments = pocketBreakdown.map((c) => ({
-    key: c.category,
-    label: c.category,
-    amount: c.amount,
-    color: POCKET_CATEGORY_COLORS[c.category],
+  const pocketSpent = useMemo(() => getPocketSpent(weekRows), [weekRows]);
+  const pocketTrend = pocketWeekEndings.map((weekEnding, i) => ({
+    label: formatDateShort(weekEnding),
+    amount: pocketWeeklyTotals[i] ?? 0,
   }));
 
   const groceryWeeklyTotals = useMemo(() => getWeeklyTotals(groceryMonthRows), [groceryMonthRows]);
@@ -144,7 +141,7 @@ export function FinOpsScreen({
             spent={pocketSpent}
             accentColor={flexTone.fg}
             trackColor={flexTone.bg}
-            segments={pocketSegments}
+            trend={pocketTrend}
           />
           <BudgetCard
             title={`Grocery in ${groceryMonthLabel}`}
