@@ -26,11 +26,11 @@ export default async function FinOpsPage() {
       .returns<TransactionRow[]>(),
     supabase
       .from("transactions")
-      .select("amount, mode")
+      .select("amount, mode, category")
       .gte("week_ending", monthStart)
       .lte("week_ending", monthEnd)
       .gte("amount", 0)
-      .returns<{ amount: number; mode: string }[]>(),
+      .returns<{ amount: number; mode: string; category: string }[]>(),
     supabase
       .from("transactions")
       .select("amount, week_ending")

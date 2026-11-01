@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Menu } from "lucide-react";
 import { formatShortDay } from "@/lib/format";
 import { getModeTone, type ModeKey } from "@/lib/mode-colors";
-import { getModeTotals, getTopCategory, groupByDay } from "@/lib/finops-aggregate";
+import { getCategoryTotals, getModeTotals, getTopCategory, groupByDay } from "@/lib/finops-aggregate";
 import type { TransactionRow } from "@/lib/finops-shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Amount } from "@/components/finops/amount";
@@ -34,7 +34,7 @@ export function FinOpsScreen({
 }: {
   weekRows: TransactionRow[];
   weekTotal: number;
-  monthRows: { amount: number; mode: string }[];
+  monthRows: { amount: number; mode: string; category: string }[];
   monthTotal: number;
   monthTransactionCount: number;
   fourWeekTotals: number[];
@@ -48,6 +48,8 @@ export function FinOpsScreen({
   const topCategory = useMemo(() => getTopCategory(weekRows), [weekRows]);
   const weekModeTotals = useMemo(() => getModeTotals(weekRows), [weekRows]);
   const monthModeTotals = useMemo(() => getModeTotals(monthRows), [monthRows]);
+  const weekCategoryTotals = useMemo(() => getCategoryTotals(weekRows), [weekRows]);
+  const monthCategoryTotals = useMemo(() => getCategoryTotals(monthRows), [monthRows]);
 
   const topCategorySparkline = useMemo(() => {
     if (!topCategory) return [];
@@ -130,7 +132,9 @@ export function FinOpsScreen({
                 />
               </div>
             </button>
-            {expanded === "week" && <ModeBreakdown totals={weekModeTotals} />}
+            {expanded === "week" && (
+              <ModeBreakdown totals={weekModeTotals} categoryTotals={weekCategoryTotals} />
+            )}
 
             <button
               type="button"
@@ -152,7 +156,9 @@ export function FinOpsScreen({
                 />
               </div>
             </button>
-            {expanded === "month" && <ModeBreakdown totals={monthModeTotals} />}
+            {expanded === "month" && (
+              <ModeBreakdown totals={monthModeTotals} categoryTotals={monthCategoryTotals} />
+            )}
           </CardContent>
         </Card>
 
@@ -222,18 +228,61 @@ export function FinOpsScreen({
   );
 }
 
-function ModeBreakdown({ totals }: { totals: { mode: ModeKey; amount: number }[] }) {
+function ModeBreakdown({
+  totals,
+  categoryTotals,
+}: {
+  totals: { mode: ModeKey; amount: number }[];
+  categoryTotals: { mode: ModeKey; category: string; amount: number }[];
+}) {
+  const [openMode, setOpenMode] = useState<ModeKey | null>(null);
+
   return (
     <div className="space-y-2.5 bg-muted/30 px-4 py-3.5">
       {totals.map((t) => {
         const tone = getModeTone(t.mode);
+        const isOpen = openMode === t.mode;
+        const categories = categoryTotals
+          .filter((c) => c.mode === t.mode)
+          .sort((a, b) => b.amount - a.amount);
+
         return (
-          <div key={t.mode} className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm">
-              <span className="size-2 rounded-full" style={{ backgroundColor: tone.fg }} />
-              {t.mode}
-            </span>
-            <Amount value={t.amount} size={13} />
+          <div key={t.mode}>
+            <button
+              type="button"
+              onClick={() => setOpenMode(isOpen ? null : t.mode)}
+              className="flex w-full items-center justify-between"
+            >
+              <span className="flex items-center gap-2 text-sm">
+                <span className="size-2 rounded-full" style={{ backgroundColor: tone.fg }} />
+                {t.mode}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Amount value={t.amount} size={13} />
+                <ChevronDown
+                  className={`size-3.5 text-muted-foreground transition-transform ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </span>
+            </button>
+            {isOpen && (
+              <div className="mt-2 space-y-1.5 border-l border-border pl-3">
+                {categories.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No spending yet</p>
+                ) : (
+                  categories.map((c) => (
+                    <div
+                      key={c.category}
+                      className="flex items-center justify-between text-xs text-muted-foreground"
+                    >
+                      <span>{c.category}</span>
+                      <Amount value={c.amount} size={12} />
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         );
       })}

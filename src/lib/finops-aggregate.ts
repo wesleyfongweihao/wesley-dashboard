@@ -21,7 +21,9 @@ export function sumAmounts(rows: TransactionRow[]): number {
   return rows.reduce((sum, r) => sum + r.amount, 0);
 }
 
-export function getCategoryTotals(rows: TransactionRow[]): CategoryTotal[] {
+export function getCategoryTotals(
+  rows: { amount: number; mode: string; category: string }[]
+): CategoryTotal[] {
   const map = new Map<string, CategoryTotal>();
   for (const row of rows) {
     const modeKey = toModeKey(row.mode);
