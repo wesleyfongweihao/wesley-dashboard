@@ -2,13 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Menu } from "lucide-react";
-import { formatShortDay } from "@/lib/format";
-import { getModeTone, type ModeKey } from "@/lib/mode-colors";
-import { getCategoryTotals, getModeTotals, getTopCategory, groupByDay } from "@/lib/finops-aggregate";
+import { Menu } from "lucide-react";
+import { formatShortDay, formatWeekEndingShort } from "@/lib/format";
+import { getModeTone } from "@/lib/mode-colors";
+import { getTopCategory, groupByDay } from "@/lib/finops-aggregate";
+import {
+  GROCERY_WEEK_COLORS,
+  MONTHLY_GROCERY_BUDGET,
+  POCKET_CATEGORY_COLORS,
+  WEEKLY_POCKET_BUDGET,
+  getPocketBreakdown,
+  getWeeklyTotals,
+} from "@/lib/finops-budget";
 import type { TransactionRow } from "@/lib/finops-shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Amount } from "@/components/finops/amount";
+import { BudgetCard } from "@/components/finops/budget-card";
 import { Sparkline } from "@/components/finops/sparkline";
 import { MonieLogo } from "@/components/finops/logo";
 import { TransactionRowCard } from "@/components/finops/transaction-row-card";
@@ -25,31 +34,49 @@ function useGreeting() {
 
 export function FinOpsScreen({
   weekRows,
-  weekTotal,
-  monthRows,
-  monthTotal,
-  monthTransactionCount,
+  groceryMonthRows,
+  groceryMonthLabel,
   fourWeekTotals,
   recentRows,
 }: {
   weekRows: TransactionRow[];
-  weekTotal: number;
-  monthRows: { amount: number; mode: string; category: string }[];
-  monthTotal: number;
-  monthTransactionCount: number;
+  groceryMonthRows: { amount: number; week_ending: string }[];
+  groceryMonthLabel: string;
   fourWeekTotals: number[];
   recentRows: TransactionRow[];
 }) {
   const greeting = useGreeting();
-  const [expanded, setExpanded] = useState<"week" | "month" | null>(null);
 
   const weekDayGroups = useMemo(() => groupByDay(weekRows), [weekRows]);
   const listDayGroups = useMemo(() => groupByDay(recentRows), [recentRows]);
   const topCategory = useMemo(() => getTopCategory(weekRows), [weekRows]);
-  const weekModeTotals = useMemo(() => getModeTotals(weekRows), [weekRows]);
-  const monthModeTotals = useMemo(() => getModeTotals(monthRows), [monthRows]);
-  const weekCategoryTotals = useMemo(() => getCategoryTotals(weekRows), [weekRows]);
-  const monthCategoryTotals = useMemo(() => getCategoryTotals(monthRows), [monthRows]);
+
+  const pocketBreakdown = useMemo(() => getPocketBreakdown(weekRows), [weekRows]);
+  const pocketSpent = useMemo(
+    () => pocketBreakdown.reduce((sum, c) => sum + c.amount, 0),
+    [pocketBreakdown]
+  );
+  const pocketSegments = pocketBreakdown.map((c) => ({
+    key: c.category,
+    label: c.category,
+    amount: c.amount,
+    color: POCKET_CATEGORY_COLORS[c.category],
+  }));
+
+  const groceryWeeklyTotals = useMemo(() => getWeeklyTotals(groceryMonthRows), [groceryMonthRows]);
+  const grocerySpent = useMemo(
+    () => groceryWeeklyTotals.reduce((sum, w) => sum + w.amount, 0),
+    [groceryWeeklyTotals]
+  );
+  const grocerySegments = groceryWeeklyTotals.map((w, i) => ({
+    key: w.weekEnding,
+    label: formatWeekEndingShort(w.weekEnding),
+    amount: w.amount,
+    color: GROCERY_WEEK_COLORS[Math.min(i, GROCERY_WEEK_COLORS.length - 1)],
+  }));
+
+  const flexTone = getModeTone("Flex");
+  const fixedTone = getModeTone("Fixed");
 
   const topCategorySparkline = useMemo(() => {
     if (!topCategory) return [];
@@ -109,58 +136,26 @@ export function FinOpsScreen({
       </div>
 
       <div className="mx-auto w-full max-w-md space-y-6 px-4 pt-6">
-        {/* Summary card */}
-        <Card>
-          <CardContent className="divide-y divide-border p-0">
-            <button
-              type="button"
-              onClick={() => setExpanded(expanded === "week" ? null : "week")}
-              className="flex w-full items-center justify-between px-4 py-4 text-left"
-            >
-              <div>
-                <p className="text-base font-medium">This week</p>
-                <p className="text-xs text-muted-foreground">
-                  {weekRows.length} transaction{weekRows.length === 1 ? "" : "s"}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Amount value={weekTotal} size={16} />
-                <ChevronDown
-                  className={`size-4 text-muted-foreground transition-transform ${
-                    expanded === "week" ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
-            </button>
-            {expanded === "week" && (
-              <ModeBreakdown totals={weekModeTotals} categoryTotals={weekCategoryTotals} />
-            )}
-
-            <button
-              type="button"
-              onClick={() => setExpanded(expanded === "month" ? null : "month")}
-              className="flex w-full items-center justify-between px-4 py-4 text-left"
-            >
-              <div>
-                <p className="text-base font-medium">This month</p>
-                <p className="text-xs text-muted-foreground">
-                  {monthTransactionCount} transaction{monthTransactionCount === 1 ? "" : "s"}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Amount value={monthTotal} size={16} />
-                <ChevronDown
-                  className={`size-4 text-muted-foreground transition-transform ${
-                    expanded === "month" ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
-            </button>
-            {expanded === "month" && (
-              <ModeBreakdown totals={monthModeTotals} categoryTotals={monthCategoryTotals} />
-            )}
-          </CardContent>
-        </Card>
+        {/* Budgets */}
+        <div className="space-y-3">
+          <BudgetCard
+            title="Pocket this week"
+            budget={WEEKLY_POCKET_BUDGET}
+            spent={pocketSpent}
+            accentColor={flexTone.fg}
+            trackColor={flexTone.bg}
+            segments={pocketSegments}
+          />
+          <BudgetCard
+            title={`Grocery in ${groceryMonthLabel}`}
+            budget={MONTHLY_GROCERY_BUDGET}
+            spent={grocerySpent}
+            accentColor={fixedTone.fg}
+            trackColor={fixedTone.bg}
+            segments={grocerySegments}
+            remainderLabel="Left"
+          />
+        </div>
 
         {/* Spending insights */}
         <div>
@@ -225,67 +220,5 @@ export function FinOpsScreen({
         </div>
       </div>
     </main>
-  );
-}
-
-function ModeBreakdown({
-  totals,
-  categoryTotals,
-}: {
-  totals: { mode: ModeKey; amount: number }[];
-  categoryTotals: { mode: ModeKey; category: string; amount: number }[];
-}) {
-  const [openMode, setOpenMode] = useState<ModeKey | null>(null);
-
-  return (
-    <div className="space-y-2.5 bg-muted/30 px-4 py-3.5">
-      {totals.map((t) => {
-        const tone = getModeTone(t.mode);
-        const isOpen = openMode === t.mode;
-        const categories = categoryTotals
-          .filter((c) => c.mode === t.mode)
-          .sort((a, b) => b.amount - a.amount);
-
-        return (
-          <div key={t.mode}>
-            <button
-              type="button"
-              onClick={() => setOpenMode(isOpen ? null : t.mode)}
-              className="flex w-full items-center justify-between"
-            >
-              <span className="flex items-center gap-2 text-sm">
-                <span className="size-2 rounded-full" style={{ backgroundColor: tone.fg }} />
-                {t.mode}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Amount value={t.amount} size={13} />
-                <ChevronDown
-                  className={`size-3.5 text-muted-foreground transition-transform ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </span>
-            </button>
-            {isOpen && (
-              <div className="mt-2 space-y-1.5 border-l border-border pl-3">
-                {categories.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No spending yet</p>
-                ) : (
-                  categories.map((c) => (
-                    <div
-                      key={c.category}
-                      className="flex items-center justify-between text-xs text-muted-foreground"
-                    >
-                      <span>{c.category}</span>
-                      <Amount value={c.amount} size={12} />
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
   );
 }

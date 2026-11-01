@@ -1,6 +1,14 @@
 import { supabase } from "@/lib/supabase";
-import { addDays, addWeeks, getMonthRange, getWeekRange, toDateString } from "@/lib/dates";
-import { weeklyTotalsFromRows, sumAmounts } from "@/lib/finops-aggregate";
+import {
+  addDays,
+  addWeeks,
+  currentMonthKeyByWeekEnding,
+  formatMonthAbbr,
+  getMonthRangeFromKey,
+  getWeekRange,
+  toDateString,
+} from "@/lib/dates";
+import { weeklyTotalsFromRows } from "@/lib/finops-aggregate";
 import { FinOpsScreen } from "@/components/finops/finops-screen";
 import type { TransactionRow } from "@/lib/finops-shared";
 
@@ -8,13 +16,14 @@ export const dynamic = "force-dynamic";
 
 export default async function FinOpsPage() {
   const { weekStart, weekEnding } = getWeekRange(new Date());
-  const { monthStart, monthEnd } = getMonthRange(new Date());
+  const monthKey = currentMonthKeyByWeekEnding();
+  const { monthStart, monthEnd } = getMonthRangeFromKey(monthKey);
   const weekEndings = [3, 2, 1, 0].map((n) => addWeeks(weekEnding, -n));
   const fourWeeksAgoEnding = weekEndings[0];
   const today = toDateString(new Date());
   const fourteenDaysAgo = addDays(today, -13);
 
-  const [weekResult, monthResult, fourWeekResult, recentResult] = await Promise.all([
+  const [weekResult, groceryMonthResult, fourWeekResult, recentResult] = await Promise.all([
     supabase
       .from("transactions")
       .select("*")
@@ -26,11 +35,12 @@ export default async function FinOpsPage() {
       .returns<TransactionRow[]>(),
     supabase
       .from("transactions")
-      .select("amount, mode, category")
+      .select("amount, week_ending")
+      .eq("category", "Grocery")
       .gte("week_ending", monthStart)
       .lte("week_ending", monthEnd)
       .gte("amount", 0)
-      .returns<{ amount: number; mode: string; category: string }[]>(),
+      .returns<{ amount: number; week_ending: string }[]>(),
     supabase
       .from("transactions")
       .select("amount, week_ending")
@@ -50,9 +60,9 @@ export default async function FinOpsPage() {
       .returns<TransactionRow[]>(),
   ]);
 
-  if (weekResult.error || monthResult.error || fourWeekResult.error || recentResult.error) {
+  if (weekResult.error || groceryMonthResult.error || fourWeekResult.error || recentResult.error) {
     const error =
-      weekResult.error ?? monthResult.error ?? fourWeekResult.error ?? recentResult.error;
+      weekResult.error ?? groceryMonthResult.error ?? fourWeekResult.error ?? recentResult.error;
     return (
       <main className="min-h-dvh bg-muted/30 px-4 py-6">
         <p className="text-destructive">Failed to load transactions: {error?.message}</p>
@@ -61,7 +71,7 @@ export default async function FinOpsPage() {
   }
 
   const weekRows = weekResult.data ?? [];
-  const monthRows = monthResult.data ?? [];
+  const groceryMonthRows = groceryMonthResult.data ?? [];
   const fourWeekRows = fourWeekResult.data ?? [];
   const recentRows = recentResult.data ?? [];
 
@@ -70,10 +80,8 @@ export default async function FinOpsPage() {
   return (
     <FinOpsScreen
       weekRows={weekRows}
-      weekTotal={sumAmounts(weekRows)}
-      monthRows={monthRows}
-      monthTotal={monthRows.reduce((sum, r) => sum + r.amount, 0)}
-      monthTransactionCount={monthRows.length}
+      groceryMonthRows={groceryMonthRows}
+      groceryMonthLabel={formatMonthAbbr(monthKey)}
       fourWeekTotals={fourWeekTotals}
       recentRows={recentRows}
     />

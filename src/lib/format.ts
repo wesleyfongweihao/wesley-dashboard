@@ -22,6 +22,12 @@ export function formatShortDay(dateStr: string): string {
   return `${DAY_ABBR[d.getDay()]}, ${d.getDate()} ${MONTH_ABBR[d.getMonth()]}`;
 }
 
+/** e.g. "WE 1 Nov" — week-ending label for budget charts. */
+export function formatWeekEndingShort(dateStr: string): string {
+  const d = parseDateString(dateStr);
+  return `WE ${d.getDate()} ${MONTH_ABBR[d.getMonth()]}`;
+}
+
 export function formatModeShort(mode: string): string {
   return mode === "Big Amount" ? "Big" : mode;
 }
