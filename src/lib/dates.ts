@@ -106,23 +106,3 @@ export function getWeekEndingsInRange(start: string, end: string): string[] {
   }
   return endings;
 }
-
-export function getWeekRangeLabel(weekEndingStr: string) {
-  const weekEnding = parseDateString(weekEndingStr);
-  const weekStart = new Date(
-    weekEnding.getFullYear(),
-    weekEnding.getMonth(),
-    weekEnding.getDate() - 6
-  );
-  const sameMonth = weekStart.getMonth() === weekEnding.getMonth();
-  const startFmt = weekStart.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-  const endFmt = weekEnding.toLocaleDateString("en-US", {
-    month: sameMonth ? undefined : "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  return `${startFmt} – ${endFmt}`;
-}

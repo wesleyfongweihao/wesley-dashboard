@@ -77,30 +77,19 @@ export default async function DashboardPage({
   const { monthStart, monthEnd } = getMonthRangeFromKey(monthKey);
   const calendarDays = buildCalendarDays(monthKey, toDateString(new Date()));
   const prevMonthKey = addMonthsToKey(monthKey, -1);
-  const { monthStart: prevMonthStart, monthEnd: prevMonthEnd } = getMonthRangeFromKey(prevMonthKey);
 
-  const [currentResult, prevResult] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select("*")
-      .gte("week_ending", monthStart)
-      .lte("week_ending", monthEnd)
-      .gte("amount", 0)
-      .returns<TransactionRow[]>(),
-    supabase
-      .from("transactions")
-      .select("amount, mode")
-      .gte("week_ending", prevMonthStart)
-      .lte("week_ending", prevMonthEnd)
-      .gte("amount", 0)
-      .returns<{ amount: number; mode: string }[]>(),
-  ]);
+  const currentResult = await supabase
+    .from("transactions")
+    .select("*")
+    .gte("week_ending", monthStart)
+    .lte("week_ending", monthEnd)
+    .gte("amount", 0)
+    .returns<TransactionRow[]>();
 
-  if (currentResult.error || prevResult.error) {
-    const error = currentResult.error ?? prevResult.error;
+  if (currentResult.error) {
     return (
       <main className="min-h-dvh bg-muted/30 px-4 py-6">
-        <p className="text-destructive">Failed to load transactions: {error?.message}</p>
+        <p className="text-destructive">Failed to load transactions: {currentResult.error.message}</p>
       </main>
     );
   }
@@ -115,7 +104,6 @@ export default async function DashboardPage({
       prevHref={`/finops/dashboard?month=${prevMonthKey}`}
       nextHref={nextMonthKey <= thisMonthKey ? `/finops/dashboard?month=${nextMonthKey}` : null}
       rows={currentResult.data ?? []}
-      prevMonthRows={prevResult.data ?? []}
       calendarDays={calendarDays}
       yearViewHref={`/finops/dashboard?view=year&year=${Number(monthKey.slice(0, 4))}`}
     />

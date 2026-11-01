@@ -1,21 +1,14 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/finops/page-header";
 import { Amount } from "@/components/finops/amount";
-import { SpendDonut } from "@/components/finops/spend-donut";
-import { formatMonthAbbr, getWeekRangeLabel } from "@/lib/dates";
+import { formatMonthAbbr } from "@/lib/dates";
 import { getModeTone } from "@/lib/mode-colors";
 import type { TransactionRow } from "@/lib/finops-shared";
-import {
-  MODE_FILTERS,
-  matchesModeFilter,
-  type CalendarDay,
-  type ModeFilter,
-  type YearMonthTotal,
-} from "@/lib/finops-calendar";
+import type { CalendarDay, YearMonthTotal } from "@/lib/finops-calendar";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HIGH_SPEND_MULTIPLIER = 1.5;
@@ -37,7 +30,6 @@ type DashboardScreenProps =
       prevHref: string;
       nextHref: string | null;
       rows: TransactionRow[];
-      prevMonthRows: { amount: number; mode: string }[];
       calendarDays: CalendarDay[];
       yearViewHref: string;
     }
@@ -113,77 +105,15 @@ function MonthView({
   prevHref,
   nextHref,
   rows,
-  prevMonthRows,
   calendarDays,
 }: Extract<DashboardScreenProps, { view: "month" }>) {
-  const [modeFilter, setModeFilter] = useState<ModeFilter>("All");
-
-  const filteredRows = useMemo(
-    () => rows.filter((r) => matchesModeFilter(r.mode, modeFilter)),
-    [rows, modeFilter]
-  );
-
   const dailyTotals = useMemo(() => {
     const map = new Map<string, number>();
-    for (const row of filteredRows) {
+    for (const row of rows) {
       map.set(row.txn_date, (map.get(row.txn_date) ?? 0) + row.amount);
     }
     return map;
-  }, [filteredRows]);
-
-  const monthTotal = useMemo(
-    () => filteredRows.reduce((sum, r) => sum + r.amount, 0),
-    [filteredRows]
-  );
-
-  // Calendar days split into Mon–Sun weeks, each with its week_ending (the
-  // Sunday) and that week's total for the selected mode filter.
-  const weeks = useMemo(() => {
-    const totalByWeekEnding = new Map<string, number>();
-    for (const row of filteredRows) {
-      totalByWeekEnding.set(
-        row.week_ending,
-        (totalByWeekEnding.get(row.week_ending) ?? 0) + row.amount
-      );
-    }
-    const result: { weekEnding: string; days: CalendarDay[]; total: number; hasToday: boolean }[] =
-      [];
-    for (let i = 0; i < calendarDays.length; i += 7) {
-      const days = calendarDays.slice(i, i + 7);
-      const weekEnding = days[days.length - 1].date;
-      result.push({
-        weekEnding,
-        days,
-        total: totalByWeekEnding.get(weekEnding) ?? 0,
-        hasToday: days.some((d) => d.isToday),
-      });
-    }
-    return result;
-  }, [calendarDays, filteredRows]);
-  const maxWeekTotal = Math.max(0, ...weeks.map((w) => w.total));
-
-  // Tapping a week narrows "Where it went" to that week; tapping it again
-  // (or changing month) goes back to the whole month.
-  const [selectedWeekEnding, setSelectedWeekEnding] = useState<string | null>(null);
-  const selectedWeekIndex = weeks.findIndex((w) => w.weekEnding === selectedWeekEnding);
-  const donutRows = useMemo(
-    () =>
-      selectedWeekIndex === -1
-        ? filteredRows
-        : filteredRows.filter((r) => r.week_ending === selectedWeekEnding),
-    [filteredRows, selectedWeekEnding, selectedWeekIndex]
-  );
-
-  const prevMonthTotal = useMemo(
-    () =>
-      prevMonthRows
-        .filter((r) => matchesModeFilter(r.mode, modeFilter))
-        .reduce((sum, r) => sum + r.amount, 0),
-    [prevMonthRows, modeFilter]
-  );
-
-  const trendDiff = monthTotal - prevMonthTotal;
-  const isUp = trendDiff > 0;
+  }, [rows]);
 
   const highSpendThreshold = useMemo(() => {
     const spendDays = calendarDays
@@ -196,66 +126,29 @@ function MonthView({
 
   return (
     <>
-      {/* Mode filter toggle */}
-      <div className="flex rounded-full border border-border bg-muted/30 p-1">
-        {MODE_FILTERS.map((filter) => (
-          <button
-            key={filter}
-            type="button"
-            onClick={() => setModeFilter(filter)}
-            className={`flex-1 rounded-full py-1.5 text-sm font-medium transition-colors ${
-              modeFilter === filter
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground"
-            }`}
-          >
-            {filter}
-          </button>
-        ))}
-      </div>
-
       {/* Month navigation */}
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-4">
+        <Link
+          href={prevHref}
+          aria-label="Previous month"
+          className="flex size-8 items-center justify-center rounded-full hover:bg-muted"
+        >
+          <ChevronLeft className="size-5 text-muted-foreground" />
+        </Link>
+        <p className="text-sm font-medium text-muted-foreground">{monthLabel}</p>
+        {nextHref ? (
           <Link
-            href={prevHref}
-            aria-label="Previous month"
+            href={nextHref}
+            aria-label="Next month"
             className="flex size-8 items-center justify-center rounded-full hover:bg-muted"
           >
-            <ChevronLeft className="size-5 text-muted-foreground" />
+            <ChevronRight className="size-5 text-muted-foreground" />
           </Link>
-          <p className="text-sm font-medium text-muted-foreground">{monthLabel}</p>
-          {nextHref ? (
-            <Link
-              href={nextHref}
-              aria-label="Next month"
-              className="flex size-8 items-center justify-center rounded-full hover:bg-muted"
-            >
-              <ChevronRight className="size-5 text-muted-foreground" />
-            </Link>
-          ) : (
-            <span className="flex size-8 items-center justify-center">
-              <ChevronRight className="size-5 text-muted-foreground/30" />
-            </span>
-          )}
-        </div>
-        <div className="mt-2 flex items-center justify-center gap-2">
-          <Amount value={monthTotal} size={28} className="text-primary" />
-          {trendDiff !== 0 && (
-            <span
-              className={`inline-flex items-center gap-0.5 text-xs font-medium ${
-                isUp ? "text-amber-600" : "text-emerald-600"
-              }`}
-            >
-              {isUp ? "↑" : "↓"}
-              <Amount value={Math.abs(trendDiff)} size={11} />
-            </span>
-          )}
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Total spend
-          {trendDiff !== 0 && " vs last month"}
-        </p>
+        ) : (
+          <span className="flex size-8 items-center justify-center">
+            <ChevronRight className="size-5 text-muted-foreground/30" />
+          </span>
+        )}
       </div>
 
       {/* Calendar grid */}
@@ -267,11 +160,9 @@ function MonthView({
         </div>
 
         <div className="mt-1 grid grid-cols-7 gap-1">
-          {weeks.map((week) => (
-            <Fragment key={week.weekEnding}>
-          {week.days.map((day) => {
+          {calendarDays.map((day) => {
             const total = dailyTotals.get(day.date) ?? 0;
-            const hasTxn = !day.isFuture && total > 0;
+            const hasTxn = total > 0;
             const highSpend = hasTxn && highSpendThreshold !== null && total > highSpendThreshold;
             const dayNumber = Number(day.date.slice(8, 10));
 
@@ -280,10 +171,10 @@ function MonthView({
               day.isToday ? "border-[1.5px] border-primary" : "border border-transparent",
             ].join(" ");
 
-            const dateColor = day.isFuture
-              ? "text-muted-foreground/30"
-              : day.isToday
-                ? "text-primary"
+            const dateColor = day.isToday
+              ? "text-primary"
+              : day.isFuture && !hasTxn
+                ? "text-muted-foreground/30"
                 : !day.inMonth
                   ? "text-muted-foreground/40"
                   : "text-foreground";
@@ -291,7 +182,7 @@ function MonthView({
             const inner = (
               <>
                 <span className={`text-xs font-medium ${dateColor}`}>{dayNumber}</span>
-                {day.isFuture ? null : hasTxn ? (
+                {hasTxn ? (
                   <Amount
                     value={total}
                     size={10}
@@ -299,7 +190,7 @@ function MonthView({
                       highSpend ? "font-medium text-[#993C1D]" : "font-medium text-muted-foreground"
                     }
                   />
-                ) : (
+                ) : day.isFuture ? null : (
                   <span className="text-[10px] text-muted-foreground/50">—</span>
                 )}
               </>
@@ -322,8 +213,6 @@ function MonthView({
               </div>
             );
           })}
-            </Fragment>
-          ))}
         </div>
 
         {/* Legend */}
@@ -341,69 +230,6 @@ function MonthView({
           </span>
         </div>
       </div>
-
-      {/* Weekly totals — bar length is relative to the biggest week */}
-      <section className="space-y-3">
-        <div className="flex items-baseline justify-between">
-          <p className="text-sm font-medium text-muted-foreground">By week</p>
-          <p className="text-xs text-muted-foreground/70">Tap a week to see where it went</p>
-        </div>
-        <div className="space-y-1">
-          {weeks.map((week, i) => {
-            const barPercent = maxWeekTotal > 0 ? (week.total / maxWeekTotal) * 100 : 0;
-            const selected = i === selectedWeekIndex;
-            return (
-              <button
-                type="button"
-                key={week.weekEnding}
-                aria-pressed={selected}
-                onClick={() => setSelectedWeekEnding(selected ? null : week.weekEnding)}
-                className={`block w-full space-y-1.5 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                  selected ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted/50"
-                }`}
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="flex items-baseline gap-2">
-                    <span
-                      className={`text-sm font-medium ${
-                        week.hasToday ? "text-primary" : "text-foreground"
-                      }`}
-                    >
-                      Week {i + 1}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {getWeekRangeLabel(week.weekEnding)}
-                    </span>
-                  </span>
-                  {week.total > 0 ? (
-                    <Amount
-                      value={week.total}
-                      size={17}
-                      className={week.hasToday ? "text-primary" : "text-foreground"}
-                    />
-                  ) : (
-                    <span className="text-sm text-muted-foreground/50">—</span>
-                  )}
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted/60">
-                  <div
-                    className={`h-full rounded-full ${
-                      week.hasToday ? "bg-primary" : "bg-primary/35"
-                    }`}
-                    style={{ width: `${barPercent}%` }}
-                  />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <SpendDonut
-        rows={donutRows}
-        filter={modeFilter}
-        title={selectedWeekIndex === -1 ? "Where it went · Whole month" : `Where it went · Week ${selectedWeekIndex + 1}`}
-      />
     </>
   );
 }
