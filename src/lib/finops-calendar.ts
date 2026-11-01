@@ -9,6 +9,15 @@ export type CalendarDay = {
   isToday: boolean;
 };
 
+export type ModeFilter = "All" | "Flex" | "Fixed" | "Big";
+export const MODE_FILTERS: ModeFilter[] = ["All", "Flex", "Fixed", "Big"];
+
+export function matchesModeFilter(mode: string, filter: ModeFilter): boolean {
+  if (filter === "All") return true;
+  if (filter === "Big") return mode !== "Flex" && mode !== "Fixed";
+  return mode === filter;
+}
+
 /** Every day belonging to a week whose week_ending falls in `monthKey`
  * ("YYYY-MM"), grouped Mon–Sun, oldest week first. Days from the previous
  * calendar month are included (and flagged `inMonth: false`) whenever

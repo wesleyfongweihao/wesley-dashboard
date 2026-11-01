@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/finops/page-header";
@@ -8,7 +8,13 @@ import { Amount } from "@/components/finops/amount";
 import { formatMonthAbbr } from "@/lib/dates";
 import { getModeTone } from "@/lib/mode-colors";
 import type { TransactionRow } from "@/lib/finops-shared";
-import type { CalendarDay, YearMonthTotal } from "@/lib/finops-calendar";
+import {
+  MODE_FILTERS,
+  matchesModeFilter,
+  type CalendarDay,
+  type ModeFilter,
+  type YearMonthTotal,
+} from "@/lib/finops-calendar";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HIGH_SPEND_MULTIPLIER = 1.5;
@@ -107,13 +113,20 @@ function MonthView({
   rows,
   calendarDays,
 }: Extract<DashboardScreenProps, { view: "month" }>) {
+  const [modeFilter, setModeFilter] = useState<ModeFilter>("All");
+
+  const filteredRows = useMemo(
+    () => rows.filter((r) => matchesModeFilter(r.mode, modeFilter)),
+    [rows, modeFilter]
+  );
+
   const dailyTotals = useMemo(() => {
     const map = new Map<string, number>();
-    for (const row of rows) {
+    for (const row of filteredRows) {
       map.set(row.txn_date, (map.get(row.txn_date) ?? 0) + row.amount);
     }
     return map;
-  }, [rows]);
+  }, [filteredRows]);
 
   const highSpendThreshold = useMemo(() => {
     const spendDays = calendarDays
@@ -126,6 +139,24 @@ function MonthView({
 
   return (
     <>
+      {/* Mode filter toggle */}
+      <div className="flex rounded-full border border-border bg-muted/30 p-1">
+        {MODE_FILTERS.map((filter) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => setModeFilter(filter)}
+            className={`flex-1 rounded-full py-1.5 text-sm font-medium transition-colors ${
+              modeFilter === filter
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground"
+            }`}
+          >
+            {filter}
+          </button>
+        ))}
+      </div>
+
       {/* Month navigation */}
       <div className="flex items-center justify-center gap-4">
         <Link
