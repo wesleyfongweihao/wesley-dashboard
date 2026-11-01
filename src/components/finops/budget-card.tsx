@@ -134,9 +134,12 @@ function TrendChart({
       </div>
       <div className="flex justify-between gap-1.5 text-center text-[10px] text-muted-foreground">
         {weeks.map((w, i) => (
-          <span key={i} className="flex-1 truncate">
-            {w.label}
-          </span>
+          <div key={i} className="flex-1 truncate">
+            <div>{w.label}</div>
+            <div className="truncate">
+              (<Amount value={w.amount} size={9} className="text-muted-foreground" />)
+            </div>
+          </div>
         ))}
       </div>
     </div>
