@@ -25,7 +25,7 @@ export default async function FinOpsPage() {
   const today = toDateString(new Date());
   const fourteenDaysAgo = addDays(today, -13);
 
-  const [weekResult, groceryMonthResult, fourWeekResult, sixWeekResult, recentResult] =
+  const [weekResult, monthResult, groceryMonthResult, fourWeekResult, sixWeekResult, recentResult] =
     await Promise.all([
       supabase
         .from("transactions")
@@ -36,6 +36,13 @@ export default async function FinOpsPage() {
         .order("txn_date", { ascending: false })
         .order("created_at", { ascending: true })
         .returns<TransactionRow[]>(),
+      supabase
+        .from("transactions")
+        .select("amount, mode, category")
+        .gte("week_ending", monthStart)
+        .lte("week_ending", monthEnd)
+        .gte("amount", 0)
+        .returns<{ amount: number; mode: string; category: string }[]>(),
       supabase
         .from("transactions")
         .select("amount, week_ending")
@@ -73,6 +80,7 @@ export default async function FinOpsPage() {
 
   if (
     weekResult.error ||
+    monthResult.error ||
     groceryMonthResult.error ||
     fourWeekResult.error ||
     sixWeekResult.error ||
@@ -80,6 +88,7 @@ export default async function FinOpsPage() {
   ) {
     const error =
       weekResult.error ??
+      monthResult.error ??
       groceryMonthResult.error ??
       fourWeekResult.error ??
       sixWeekResult.error ??
@@ -92,6 +101,7 @@ export default async function FinOpsPage() {
   }
 
   const weekRows = weekResult.data ?? [];
+  const monthRows = monthResult.data ?? [];
   const groceryMonthRows = groceryMonthResult.data ?? [];
   const fourWeekRows = fourWeekResult.data ?? [];
   const sixWeekRows = sixWeekResult.data ?? [];
@@ -104,6 +114,7 @@ export default async function FinOpsPage() {
   return (
     <FinOpsScreen
       weekRows={weekRows}
+      monthRows={monthRows}
       groceryMonthRows={groceryMonthRows}
       groceryMonthLabel={formatMonthAbbr(monthKey)}
       fourWeekTotals={fourWeekTotals}
